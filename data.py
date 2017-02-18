@@ -54,7 +54,7 @@ class PinnakisaData:
         """
         return Counter([sp for ticks in self.tick_lists for (sp, sp_date) in ticks.items() if sp_date == date_instance.isoformat()])
 
-    def species_cumulation(self, species, start_date, end_date):
+    def get_species_cumulation(self, species, start_date, end_date):
         """
         Get the amount of species ticked for each date with zeros.
         """
@@ -66,6 +66,15 @@ class PinnakisaData:
 
         return sorted(values.items())
 
+    def get_daily_popular_ticks(self, start_date, end_date):
+        """
+        Get most popular tick for each date
+        """
+        ticks = {}
+        for single_date in _daterange(start_date, end_date):
+            ticks.update({single_date.isoformat(): (self.get_by_date(single_date).most_common(1) or [''])[0]})
+
+        return sorted(ticks.items())
 
 kisa = PinnakisaData()
 kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
@@ -75,5 +84,7 @@ print()
 print(kisa.get_by_date(date(2017, 2, 18)))
 print()
 
-print(kisa.species_cumulation('CORRAX', date(2017, 1, 1), date(2017, 2, 28)))
+print(kisa.get_species_cumulation('CORRAX', date(2017, 1, 1), date(2017, 2, 28)))
+print()
+print(kisa.get_daily_popular_ticks(date(2017, 1, 1), date(2017, 2, 28)))
 
