@@ -102,16 +102,24 @@ class PinnakisaData:
 
         return sorted(ticks.items())
 
-if __name__ == 'main':
+    def get_all_species(self):
+        """
+        Get all species from data
+        """
+        return sorted(set([sp for ticks in self.tick_lists for sp in ticks.keys()]))
+
+
+if __name__ == '__main__':
     kisa = PinnakisaData()
     kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
 
-    print(kisa.get_by_species('FRICOE'))
-    print()
-    print(kisa.get_by_date(date(2017, 2, 18)))
-    print()
+    # print(kisa.get_by_species('FRICOE'))
+    # print()
+    # print(kisa.get_by_date(date(2017, 2, 18)))
+    # print()
+    #
+    # print(kisa.get_species_cumulation('CORRAX', date(2017, 1, 1), date(2017, 2, 28)))
+    # print()
+    # print(kisa.get_daily_popular_ticks(date(2017, 1, 1), date(2017, 2, 28)))
 
-    print(kisa.get_species_cumulation('CORRAX', date(2017, 1, 1), date(2017, 2, 28)))
-    print()
-    print(kisa.get_daily_popular_ticks(date(2017, 1, 1), date(2017, 2, 28)))
-
+    print(kisa.get_all_species())
