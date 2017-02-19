@@ -4,9 +4,12 @@
 Handle data
 """
 import json
+import os
 import urllib.request
 from collections import Counter
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
+
+# TODO: Add logging
 
 
 def _daterange(start_date, end_date):
@@ -23,15 +26,38 @@ class PinnakisaData:
     """
 
     def __init__(self, api_url='http://www.tringa.fi/kisa/index.php/api/'):
+        self.PERSIST_FILE = 'pinnakisa.json'
         self.api_url = api_url
         self.contest_data_url = api_url + 'contest_participations/{id}'
         self.data = []
         self.tick_lists = {}
 
-    def read_contest_data(self, id):
-        req = urllib.request.Request(self.contest_data_url.format(id=id))
-        with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode('utf-8'))
+    def read_contest_data(self, id, cached='auto'):
+        result = []
+        reload = False
+
+        if cached == 'auto':
+            if datetime.timestamp(datetime.now()) - os.path.getmtime(self.PERSIST_FILE) > 60*60:
+                reload = True
+
+        if not reload:
+            print('Reading data from local file')
+            try:
+                with open(self.PERSIST_FILE, 'r') as fp:
+                    result = json.load(fp)
+            except Exception as e:
+                print(e)
+            if not len(result):
+                reload = True
+
+        if reload:
+            print('Reading data from API')
+            req = urllib.request.Request(self.contest_data_url.format(id=id))
+            with urllib.request.urlopen(req) as response:
+                result = json.loads(response.read().decode('utf-8'))
+                with open(self.PERSIST_FILE, 'w') as fp:
+                    json.dump(result, fp)
+                    print('Data saved to local file')
 
         for person in result:
             species = person.pop('species_json')
@@ -76,15 +102,16 @@ class PinnakisaData:
 
         return sorted(ticks.items())
 
-kisa = PinnakisaData()
-kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
+if __name__ == 'main':
+    kisa = PinnakisaData()
+    kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
 
-print(kisa.get_by_species('FRICOE'))
-print()
-print(kisa.get_by_date(date(2017, 2, 18)))
-print()
+    print(kisa.get_by_species('FRICOE'))
+    print()
+    print(kisa.get_by_date(date(2017, 2, 18)))
+    print()
 
-print(kisa.get_species_cumulation('CORRAX', date(2017, 1, 1), date(2017, 2, 28)))
-print()
-print(kisa.get_daily_popular_ticks(date(2017, 1, 1), date(2017, 2, 28)))
+    print(kisa.get_species_cumulation('CORRAX', date(2017, 1, 1), date(2017, 2, 28)))
+    print()
+    print(kisa.get_daily_popular_ticks(date(2017, 1, 1), date(2017, 2, 28)))
 
