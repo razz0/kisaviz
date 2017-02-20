@@ -9,6 +9,8 @@ import urllib.request
 from collections import Counter
 from datetime import timedelta, date, datetime
 
+import dateutil.parser
+
 # TODO: Add logging
 
 
@@ -80,12 +82,19 @@ class PinnakisaData:
         """
         return Counter([sp for ticks in self.tick_lists for (sp, sp_date) in ticks.items() if sp_date == date_instance.isoformat()])
 
-    def get_species_cumulation(self, species, start_date, end_date):
+    def get_species_cumulation(self, species, start_date=None, end_date=None):
         """
         Get the amount of species ticked for each date with zeros.
         """
         values = {}
-        ticks = Counter(self.get_by_species(species))
+        ticks = self.get_by_species(species)
+
+        d2 = None
+        if not start_date:
+            d1, d2 = self.get_date_limits()
+            start_date = d1
+        if not end_date:
+            end_date = d2 or self.get_date_limits()[1]
 
         for single_date in _daterange(start_date, end_date):
             values.update({single_date: ticks.get(single_date.isoformat(), 0)})
@@ -108,18 +117,26 @@ class PinnakisaData:
         """
         return sorted(set([sp for ticks in self.tick_lists for sp in ticks.keys()]))
 
+    def get_date_limits(self):
+
+        minimum = '9999-99-99'
+        maximum = '1111-11-11'
+
+        for ticks in self.tick_lists:
+            mini = min(ticks.values())
+            maxi = max(ticks.values())
+            if mini < minimum:
+                minimum = mini
+            if maxi > maximum:
+                maximum = maxi
+
+        minimum = dateutil.parser.parse(minimum).date()
+        maximum = dateutil.parser.parse(maximum).date()
+
+        return (minimum, maximum)
 
 if __name__ == '__main__':
     kisa = PinnakisaData()
     kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
-
-    # print(kisa.get_by_species('FRICOE'))
-    # print()
-    # print(kisa.get_by_date(date(2017, 2, 18)))
-    # print()
-    #
-    # print(kisa.get_species_cumulation('CORRAX', date(2017, 1, 1), date(2017, 2, 28)))
-    # print()
-    # print(kisa.get_daily_popular_ticks(date(2017, 1, 1), date(2017, 2, 28)))
 
     print(kisa.get_all_species())
