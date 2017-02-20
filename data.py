@@ -88,7 +88,7 @@ class PinnakisaData:
         ticks = Counter(self.get_by_species(species))
 
         for single_date in _daterange(start_date, end_date):
-            values.update({single_date.isoformat(): ticks.get(single_date.isoformat(), 0)})
+            values.update({single_date: ticks.get(single_date.isoformat(), 0)})
 
         return sorted(values.items())
 
