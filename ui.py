@@ -7,8 +7,8 @@ from datetime import date
 
 from bokeh.layouts import widgetbox, row
 from bokeh.models import HBox, CustomJS, ColumnDataSource
-from bokeh.models.widgets import Panel, Tabs, Select
-from bokeh.io import output_file, show
+from bokeh.models.widgets import Panel, Tabs, Select, DataTable, TableColumn
+from bokeh.io import output_file, show, vform
 from bokeh.plotting import figure
 
 from data import PinnakisaData
@@ -22,13 +22,14 @@ kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
 
 all_species = kisa.get_all_species()
 
+start_date, end_date = kisa.get_date_limits()
+
 species_data = {}
 initial_x = []
 initial_y = []
 
 for species in all_species:
-    start_date, end_data = kisa.get_date_limits()
-    sp_data = kisa.get_species_cumulation(species, start_date, end_data)
+    sp_data = kisa.get_species_cumulation(species, start_date, end_date)
     species_data[species] = [sp[1] for sp in sp_data]
     if not initial_x:
         initial_x, initial_y = zip(*sp_data)
@@ -61,21 +62,37 @@ tab1 = Panel(child=layout, title="Laji")
 
 #############
 
+# TODO: Visualize total earned each ticks per day
 p2 = figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
 p2.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
 tab2 = Panel(child=p2, title="Päivä")
 
 #############
 
+# TODO: Visualize daily total ticks for each person
 p3 = figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
 p3.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
 tab3 = Panel(child=p3, title="Henkilö")
 
 #############
 
-p4 = figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT, x_axis_type='datetime')
-p4.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
-tab4 = Panel(child=p4, title="Kisa")
+ticks = kisa.get_daily_popular_ticks(start_date, end_date)
+tick_source = {}
+dates, species, count = zip(*((dat, sp[0], sp[1]) for (dat, sp) in ticks))
+
+tick_source['date'] = dates
+tick_source['species'] = species
+tick_source['count'] = count
+
+tick_source = ColumnDataSource(tick_source)
+
+columns = [TableColumn(field="date", title="Päivämäärä"),
+           TableColumn(field="species", title="Laji"),
+           TableColumn(field="count", title="Lukumäärä")]
+table = DataTable(source=tick_source, columns=columns, width=PLOT_WIDTH, height=PLOT_HEIGHT)
+layout = vform(table)
+
+tab4 = Panel(child=layout, title="Kisa")
 
 #############
 
