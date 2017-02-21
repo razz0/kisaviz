@@ -21,7 +21,7 @@ PLOT_WIDTH = 1100
 PLOT_HEIGHT = 700
 
 kisa = PinnakisaData()
-kisa.read_contest_data('0ef446b826a8764703a63ca1fb17a3c924d82dcf')
+kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
 
 all_species = kisa.get_all_species()
 
