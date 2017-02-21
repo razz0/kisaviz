@@ -10,7 +10,7 @@ import numpy as np
 from bokeh.layouts import widgetbox
 from bokeh.models import HBox, CustomJS, ColumnDataSource, WidgetBox
 from bokeh.models.widgets import Panel, Tabs, Select, DataTable, TableColumn
-from bokeh.io import output_file, show
+from bokeh.io import output_file, show, save
 from bokeh.plotting import figure
 
 from data import PinnakisaData
@@ -109,4 +109,4 @@ tab4 = Panel(child=layout, title="Päivien yleisimmät")
 tabs = Tabs(tabs=[tab1,  # tab2, tab3,
                   tab4])
 
-show(tabs)
+save(tabs)
