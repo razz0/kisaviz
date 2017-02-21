@@ -3,6 +3,9 @@
 """
 Handle data
 """
+# TODO: Switch to use pandas
+# TODO: Add logging
+
 import json
 import os
 import urllib.request
@@ -10,8 +13,6 @@ from collections import Counter
 from datetime import timedelta, date, datetime
 
 import dateutil.parser
-
-# TODO: Add logging
 
 
 def _daterange(start_date, end_date):
