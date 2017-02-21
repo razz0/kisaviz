@@ -29,7 +29,7 @@ class PinnakisaData:
     """
 
     def __init__(self, api_url='http://www.tringa.fi/kisa/index.php/api/'):
-        self.PERSIST_FILE = 'pinnakisa.json'
+        self.PERSIST_FILE = '{id}.json'
         self.api_url = api_url
         self.contest_data_url = api_url + 'contest_participations/{id}'
         self.data = []
@@ -40,13 +40,16 @@ class PinnakisaData:
         reload = False
 
         if cached == 'auto':
-            if datetime.timestamp(datetime.now()) - os.path.getmtime(self.PERSIST_FILE) > 60*60:
+            try:
+                if datetime.timestamp(datetime.now()) - os.path.getmtime(self.PERSIST_FILE.format(id=id)) > 15 * 60:
+                    reload = True
+            except FileNotFoundError:
                 reload = True
 
         if not reload:
             print('Reading data from local file')
             try:
-                with open(self.PERSIST_FILE, 'r') as fp:
+                with open(self.PERSIST_FILE.format(id=id), 'r') as fp:
                     result = json.load(fp)
             except Exception as e:
                 print(e)
@@ -58,7 +61,7 @@ class PinnakisaData:
             req = urllib.request.Request(self.contest_data_url.format(id=id))
             with urllib.request.urlopen(req) as response:
                 result = json.loads(response.read().decode('utf-8'))
-                with open(self.PERSIST_FILE, 'w') as fp:
+                with open(self.PERSIST_FILE.format(id=id), 'w') as fp:
                     json.dump(result, fp)
                     print('Data saved to local file')
 

@@ -5,6 +5,7 @@ Handle UI
 """
 # TODO: Switch to use pandas
 # TODO: Fix UI timezone problem
+# TODO: Refactor
 
 import numpy as np
 from bokeh.layouts import widgetbox
@@ -20,7 +21,7 @@ PLOT_WIDTH = 1100
 PLOT_HEIGHT = 700
 
 kisa = PinnakisaData()
-kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
+kisa.read_contest_data('0ef446b826a8764703a63ca1fb17a3c924d82dcf')
 
 all_species = kisa.get_all_species()
 
@@ -88,6 +89,7 @@ tab1 = Panel(child=layout, title="Lajit päivittäin")
 
 ticks = kisa.get_daily_popular_ticks(start_date, end_date)
 tick_source = {}
+# print(ticks)  # TODO: Handle empty species names somewhere
 dates, species, count = zip(*((dat, sp[0], sp[1]) for (dat, sp) in ticks))
 
 tick_source['date'] = dates
