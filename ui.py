@@ -6,9 +6,9 @@ Handle UI
 from datetime import date
 
 from bokeh.layouts import widgetbox, row
-from bokeh.models import HBox, CustomJS, ColumnDataSource
+from bokeh.models import HBox, CustomJS, ColumnDataSource, WidgetBox
 from bokeh.models.widgets import Panel, Tabs, Select, DataTable, TableColumn
-from bokeh.io import output_file, show, vform
+from bokeh.io import output_file, show
 from bokeh.plotting import figure
 
 from data import PinnakisaData
@@ -90,7 +90,7 @@ columns = [TableColumn(field="date", title="Päivämäärä"),
            TableColumn(field="species", title="Laji"),
            TableColumn(field="count", title="Lukumäärä")]
 table = DataTable(source=tick_source, columns=columns, width=PLOT_WIDTH, height=PLOT_HEIGHT)
-layout = vform(table)
+layout = WidgetBox(table)
 
 tab4 = Panel(child=layout, title="Kisa")
 
