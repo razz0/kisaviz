@@ -109,9 +109,16 @@ class PinnakisaData:
         """
         Get most popular tick for each date
         """
+
+        def get_all_commonest(counter):
+            common = counter.most_common() or [('', 0)]
+            max_ticks = common[0][1]
+            names = ", ".join(sorted(name for name, count in common if count == max_ticks))
+            return names, max_ticks
+
         ticks = {}
         for single_date in list(_daterange(start_date, end_date)) + [end_date]:
-            ticks.update({single_date.isoformat(): (self.get_by_date(single_date).most_common(1) or [('', 0)])[0]})
+            ticks.update({single_date.isoformat(): get_all_commonest(self.get_by_date(single_date))})
 
         return sorted(ticks.items())
 
