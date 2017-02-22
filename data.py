@@ -25,7 +25,7 @@ def _daterange(start_date, end_date):
 
 class PinnakisaData:
     """
-    Map tabular data (currently pandas DataFrame) to RDF. Create a class instance of each row.
+    Handle data from Pinnakisa-API.
     """
 
     def __init__(self, api_url='http://www.tringa.fi/kisa/index.php/api/'):
