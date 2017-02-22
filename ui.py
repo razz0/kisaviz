@@ -5,7 +5,6 @@ Handle UI
 """
 # TODO: Switch to use pandas
 # TODO: Fix UI timezone problem
-# TODO: Refactor
 
 import numpy as np
 from bokeh.io import output_file, save
@@ -50,7 +49,6 @@ def daily_most_common_ticks():
     """
     ticks = kisa.get_daily_popular_ticks(start_date, end_date)
     tick_source = {}
-    # print(ticks)  # TODO: Handle empty species names somewhere
     dates, species, count = zip(*((dat, sp[0], sp[1]) for (dat, sp) in ticks))
 
     tick_source['date'] = dates

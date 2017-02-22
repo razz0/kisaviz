@@ -15,7 +15,7 @@ from datetime import timedelta, date, datetime
 import dateutil.parser
 
 
-def _daterange(start_date, end_date):
+def _daterange(start_date, end_date):  # TODO: use pandas.date_range
     '''
     Taken from http://stackoverflow.com/a/1060330/1816143
     '''
@@ -100,7 +100,7 @@ class PinnakisaData:
         if not end_date:
             end_date = d2 or self.get_date_limits()[1]
 
-        for single_date in _daterange(start_date, end_date):
+        for single_date in list(_daterange(start_date, end_date)) + [end_date]:
             values.update({single_date: ticks.get(single_date.isoformat(), 0)})
 
         return sorted(values.items())
@@ -110,8 +110,8 @@ class PinnakisaData:
         Get most popular tick for each date
         """
         ticks = {}
-        for single_date in _daterange(start_date, end_date):
-            ticks.update({single_date.isoformat(): (self.get_by_date(single_date).most_common(1) or [''])[0]})
+        for single_date in list(_daterange(start_date, end_date)) + [end_date]:
+            ticks.update({single_date.isoformat(): (self.get_by_date(single_date).most_common(1) or [('', 0)])[0]})
 
         return sorted(ticks.items())
 
@@ -141,6 +141,9 @@ class PinnakisaData:
 
 if __name__ == '__main__':
     kisa = PinnakisaData()
-    kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
+    # kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
+    kisa.read_contest_data('0ef446b826a8764703a63ca1fb17a3c924d82dcf')
+    # kisa.read_contest_data('b315cf20217b2bb3c1331445b4cb6ab39db9e348')
 
     print(kisa.get_all_species())
+    print(kisa.get_daily_popular_ticks(*kisa.get_date_limits()))
