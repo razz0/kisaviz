@@ -5,6 +5,7 @@ Handle UI
 """
 # TODO: Switch to use pandas
 # TODO: Fix UI timezone problem
+# TODO: Use responsive size when Bokeh eventually supports it with tabs, or get rid of tabs
 
 import numpy as np
 from bokeh.io import output_file, save
