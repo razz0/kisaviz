@@ -4,13 +4,13 @@
 Handle data
 """
 # TODO: Switch to use pandas
-# TODO: Add logging
 
 import json
+import logging
 import os
 import urllib.request
 from collections import Counter
-from datetime import timedelta, date, datetime
+from datetime import timedelta, datetime
 
 import dateutil.parser
 
@@ -28,12 +28,19 @@ class PinnakisaData:
     Handle data from Pinnakisa-API.
     """
 
-    def __init__(self, api_url='http://www.tringa.fi/kisa/index.php/api/'):
+    def __init__(self, api_url='http://www.tringa.fi/kisa/index.php/api/', loglevel='INFO'):
         self.PERSIST_FILE = '{id}.json'
         self.api_url = api_url
         self.contest_data_url = api_url + 'contest_participations/{id}'
         self.data = []
         self.tick_lists = {}
+
+        logging.basicConfig(filename='kisaviz.log',
+                            filemode='a',
+                            level=getattr(logging, loglevel),
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+        self.log = logging.getLogger(__name__)
 
     def read_contest_data(self, id, cached='auto'):
         result = []
@@ -47,7 +54,7 @@ class PinnakisaData:
                 reload = True
 
         if not reload:
-            print('Reading data from local file')
+            self.log.info('Reading data from local file')
             try:
                 with open(self.PERSIST_FILE.format(id=id), 'r') as fp:
                     result = json.load(fp)
@@ -57,13 +64,13 @@ class PinnakisaData:
                 reload = True
 
         if reload:
-            print('Reading data from API')
+            self.log.info('Reading data from API')
             req = urllib.request.Request(self.contest_data_url.format(id=id))
             with urllib.request.urlopen(req) as response:
                 result = json.loads(response.read().decode('utf-8'))
                 with open(self.PERSIST_FILE.format(id=id), 'w') as fp:
                     json.dump(result, fp)
-                    print('Data saved to local file')
+                    self.log.info('Data saved to local file')
 
         for person in result:
             species = person.pop('species_json')
