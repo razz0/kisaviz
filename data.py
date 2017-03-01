@@ -12,6 +12,8 @@ import urllib.request
 from collections import Counter
 from datetime import timedelta, datetime
 
+import pytz
+from pytz import timezone
 import dateutil.parser
 
 
@@ -91,7 +93,7 @@ class PinnakisaData:
 
         :param date_instance: instance of datetime.date
         """
-        return Counter([sp for ticks in self.tick_lists for (sp, sp_date) in ticks.items() if sp_date == date_instance.isoformat()])
+        return Counter([sp for ticks in self.tick_lists for (sp, sp_date) in ticks.items() if sp_date == date_instance.date().isoformat()])
 
     def get_species_cumulation(self, species, start_date=None, end_date=None):
         """
@@ -108,7 +110,7 @@ class PinnakisaData:
             end_date = d2 or self.get_date_limits()[1]
 
         for single_date in list(_daterange(start_date, end_date)) + [end_date]:
-            values.update({single_date: ticks.get(single_date.isoformat(), 0)})
+            values.update({single_date: ticks.get(single_date.date().isoformat(), 0)})
 
         return sorted(values.items())
 
@@ -125,7 +127,7 @@ class PinnakisaData:
 
         ticks = {}
         for single_date in list(_daterange(start_date, end_date)) + [end_date]:
-            ticks.update({single_date.isoformat(): get_all_commonest(self.get_by_date(single_date))})
+            ticks.update({single_date.date().isoformat(): get_all_commonest(self.get_by_date(single_date))})
 
         return sorted(ticks.items())
 
@@ -136,6 +138,8 @@ class PinnakisaData:
         return sorted(set([sp for ticks in self.tick_lists for sp in ticks.keys()]))
 
     def get_date_limits(self):
+
+        local = pytz.timezone ("Europe/Helsinki")
 
         minimum = '9999-99-99'
         maximum = '1111-11-11'
@@ -148,10 +152,13 @@ class PinnakisaData:
             if maxi > maximum:
                 maximum = maxi
 
-        minimum = dateutil.parser.parse(minimum).date()
-        maximum = dateutil.parser.parse(maximum).date()
+        minimum = local.localize(dateutil.parser.parse(minimum), is_dst=None)
+        maximum = local.localize(dateutil.parser.parse(maximum), is_dst=None)
 
-        return (minimum, maximum)
+        minimum += timedelta(hours=2)  # FIX TIMEZONE, AS BOKEH SEEMS TO IGNORE TZ FROM DATA
+        maximum += timedelta(hours=2)
+
+        return minimum, maximum
 
 if __name__ == '__main__':
     kisa = PinnakisaData()

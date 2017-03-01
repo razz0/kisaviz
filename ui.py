@@ -78,21 +78,21 @@ all_species = kisa.get_all_species()
 start_date, end_date = kisa.get_date_limits()
 
 species_data = {}
-initial_x = []
+dates = []
 
 totals = []
 
 for species in all_species:
     sp_data = kisa.get_species_cumulation(species, start_date, end_date)
     species_data[species] = [sp[1] for sp in sp_data]
-    if not initial_x:
-        initial_x, _ = zip(*sp_data)
+    if not dates:
+        dates, _ = zip(*sp_data)
     if not len(totals):
         totals = np.array(species_data[species])
     else:
         totals += np.array(species_data[species])
 
-species_data['dates'] = initial_x
+species_data['dates'] = dates
 species_data['ticks'] = totals
 species_data['-- Yhteensä --'] = totals
 
