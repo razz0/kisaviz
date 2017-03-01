@@ -31,10 +31,12 @@ class PinnakisaData:
     """
 
     def __init__(self, api_url='http://www.tringa.fi/kisa/index.php/api/', loglevel='INFO'):
-        self.PERSIST_FILE = '{id}.json'
+        self.CONTEST_PERSIST_FILE = 'contest_{id}.json'
+        self.CONTEST_LIST_FILE = 'contests.json'
         self.api_url = api_url
+        self.contest_list_url = api_url + 'contests/'
         self.contest_data_url = api_url + 'contest_participations/{id}'
-        self.data = []
+        self.contest_data = []
         self.tick_lists = {}
 
         logging.basicConfig(filename='kisaviz.log',
@@ -44,13 +46,24 @@ class PinnakisaData:
 
         self.log = logging.getLogger(__name__)
 
+    def _fetch_json_from_api_cached(self, url, cache_file):
+        self.log.info('Reading data from URL: %s' % url)
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            with open(cache_file, 'w') as fp:
+                json.dump(result, fp)
+                self.log.info('Data saved to cache file: %s' % cache_file)
+
+        return result
+
     def read_contest_data(self, id, cached='auto'):
-        result = []
+        contest_data = []
         reload = False
 
         if cached == 'auto':
             try:
-                if datetime.timestamp(datetime.now()) - os.path.getmtime(self.PERSIST_FILE.format(id=id)) > 15 * 60:
+                if datetime.timestamp(datetime.now()) - os.path.getmtime(self.CONTEST_PERSIST_FILE.format(id=id)) > 15 * 60:
                     reload = True
             except FileNotFoundError:
                 reload = True
@@ -58,28 +71,23 @@ class PinnakisaData:
         if not reload:
             self.log.info('Reading data from local file')
             try:
-                with open(self.PERSIST_FILE.format(id=id), 'r') as fp:
-                    result = json.load(fp)
+                with open(self.CONTEST_PERSIST_FILE.format(id=id), 'r') as fp:
+                    contest_data = json.load(fp)
             except Exception as e:
                 print(e)
-            if not len(result):
+            if not len(contest_data):
                 reload = True
 
         if reload:
-            self.log.info('Reading data from API')
-            req = urllib.request.Request(self.contest_data_url.format(id=id))
-            with urllib.request.urlopen(req) as response:
-                result = json.loads(response.read().decode('utf-8'))
-                with open(self.PERSIST_FILE.format(id=id), 'w') as fp:
-                    json.dump(result, fp)
-                    self.log.info('Data saved to local file')
+            contest_data = self._fetch_json_from_api_cached(self.contest_data_url.format(id=id),
+                                                            self.CONTEST_PERSIST_FILE.format(id=id))
 
-        for person in result:
+        for person in contest_data:
             species = person.pop('species_json')
             person['tick_list'] = json.loads(species)
 
-        self.data = result
-        self.tick_lists = [person['tick_list'] for person in self.data if len(person['tick_list'])]
+        self.contest_data = contest_data
+        self.tick_lists = [person['tick_list'] for person in self.contest_data if len(person['tick_list'])]
 
     def get_by_species(self, species):
         """
@@ -160,11 +168,17 @@ class PinnakisaData:
 
         return minimum, maximum
 
+    def get_contests(self):
+        contests = self._fetch_json_from_api_cached(self.contest_list_url, self.CONTEST_LIST_FILE)
+        return contests
+
+
 if __name__ == '__main__':
     kisa = PinnakisaData()
-    # kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
-    kisa.read_contest_data('0ef446b826a8764703a63ca1fb17a3c924d82dcf')
-    # kisa.read_contest_data('b315cf20217b2bb3c1331445b4cb6ab39db9e348')
+
+    contests = kisa.get_contests()
+
+    kisa.read_contest_data(contests[4]['id'])
 
     print(kisa.get_all_species())
     print(kisa.get_daily_popular_ticks(*kisa.get_date_limits()))
