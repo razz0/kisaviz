@@ -33,6 +33,7 @@ class PinnakisaData:
     def __init__(self, api_url='http://www.tringa.fi/kisa/index.php/api/', loglevel='INFO'):
         self.CONTEST_PERSIST_FILE = 'contest_{id}.json'
         self.CONTEST_LIST_FILE = 'contests.json'
+        self.CACHE_TIME = 20 * 60  # seconds
         self.api_url = api_url
         self.contest_list_url = api_url + 'contests/'
         self.contest_data_url = api_url + 'contest_participations/{id}'
@@ -47,40 +48,40 @@ class PinnakisaData:
         self.log = logging.getLogger(__name__)
 
     def _fetch_json_from_api_cached(self, url, cache_file):
-        self.log.info('Reading data from URL: %s' % url)
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode('utf-8'))
-            with open(cache_file, 'w') as fp:
-                json.dump(result, fp)
-                self.log.info('Data saved to cache file: %s' % cache_file)
-
-        return result
-
-    def read_contest_data(self, id, cached='auto'):
-        contest_data = []
         reload = False
+        result = None
 
-        if cached == 'auto':
-            try:
-                if datetime.timestamp(datetime.now()) - os.path.getmtime(self.CONTEST_PERSIST_FILE.format(id=id)) > 15 * 60:
-                    reload = True
-            except FileNotFoundError:
+        try:
+            if datetime.timestamp(datetime.now()) - os.path.getmtime(cache_file) > self.CACHE_TIME:
                 reload = True
+        except FileNotFoundError:
+            reload = True
 
         if not reload:
-            self.log.info('Reading data from local file')
+            self.log.info('Reading data from cache file: %s' % cache_file)
             try:
-                with open(self.CONTEST_PERSIST_FILE.format(id=id), 'r') as fp:
-                    contest_data = json.load(fp)
+                with open(cache_file, 'r') as fp:
+                    result = json.load(fp)
             except Exception as e:
                 print(e)
-            if not len(contest_data):
+
+            if not len(result):
                 reload = True
 
         if reload:
-            contest_data = self._fetch_json_from_api_cached(self.contest_data_url.format(id=id),
-                                                            self.CONTEST_PERSIST_FILE.format(id=id))
+            self.log.info('Reading data from URL: %s' % url)
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req) as response:
+                result = json.loads(response.read().decode('utf-8'))
+                with open(cache_file, 'w') as fp:
+                    json.dump(result, fp)
+                    self.log.info('Data saved to cache file: %s' % cache_file)
+
+        return result
+
+    def read_contest_data(self, id):
+        contest_data = self._fetch_json_from_api_cached(self.contest_data_url.format(id=id),
+                                                        self.CONTEST_PERSIST_FILE.format(id=id))
 
         for person in contest_data:
             species = person.pop('species_json')
@@ -170,7 +171,7 @@ class PinnakisaData:
 
     def get_contests(self):
         contests = self._fetch_json_from_api_cached(self.contest_list_url, self.CONTEST_LIST_FILE)
-        return contests
+        return sorted(contests, key=lambda c: c['date_end'], reverse=True)
 
 
 if __name__ == '__main__':
@@ -178,7 +179,8 @@ if __name__ == '__main__':
 
     contests = kisa.get_contests()
 
-    kisa.read_contest_data(contests[4]['id'])
+    print(contests[3])
+    kisa.read_contest_data(contests[3]['id'])
 
     print(kisa.get_all_species())
     print(kisa.get_daily_popular_ticks(*kisa.get_date_limits()))

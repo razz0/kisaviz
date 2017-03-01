@@ -71,54 +71,68 @@ PLOT_WIDTH = 1100
 PLOT_HEIGHT = 700
 
 kisa = PinnakisaData()
-kisa.read_contest_data('3778f94604f8dd433ed80bbf63042198abd0cbea')
+contests = kisa.get_contests()
 
-all_species = kisa.get_all_species()
+index_html = ''
 
-start_date, end_date = kisa.get_date_limits()
+for contest in contests:
+    kisa.read_contest_data(contest['id'])
 
-species_data = {}
-dates = []
+    if not kisa.contest_data:
+        continue
 
-totals = []
+    all_species = kisa.get_all_species()
 
-for species in all_species:
-    sp_data = kisa.get_species_cumulation(species, start_date, end_date)
-    species_data[species] = [sp[1] for sp in sp_data]
-    if not dates:
-        dates, _ = zip(*sp_data)
-    if not len(totals):
-        totals = np.array(species_data[species])
-    else:
-        totals += np.array(species_data[species])
+    start_date, end_date = kisa.get_date_limits()
 
-species_data['dates'] = dates
-species_data['ticks'] = totals
-species_data['-- Yhteensä --'] = totals
+    species_data = {}
+    dates = []
 
-tab1 = daily_ticks_by_species(ColumnDataSource(species_data))
+    totals = []
 
-tab2 = daily_most_common_ticks()
+    for species in all_species:
+        sp_data = kisa.get_species_cumulation(species, start_date, end_date)
+        species_data[species] = [sp[1] for sp in sp_data]
+        if not dates:
+            dates, _ = zip(*sp_data)
+        if not len(totals):
+            totals = np.array(species_data[species])
+        else:
+            totals += np.array(species_data[species])
 
-#############
+    species_data['dates'] = dates
+    species_data['ticks'] = totals
+    species_data['-- Yhteensä --'] = totals
 
-# TODO: Show all ticks for a day as a bar chart
-# p2 = figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT, x_axis_type='datetime',
-#             title="TODO")
-# # p2.line('dates', 'totals', source=sp_source, line_width=3,  color="navy", alpha=0.5)
-# p2.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
-# tab2 = Panel(child=p2, title="Päivä")
+    tab1 = daily_ticks_by_species(ColumnDataSource(species_data))
 
-#############
+    tab2 = daily_most_common_ticks()
 
-# TODO: Visualize daily total ticks for each person
-# p3 = figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT, title="TODO")
-# p3.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
-# tab3 = Panel(child=p3, title="Henkilö")
+    #############
 
-#############
+    # TODO: Show all ticks for a day as a bar chart
+    # p2 = figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT, x_axis_type='datetime',
+    #             title="TODO")
+    # # p2.line('dates', 'totals', source=sp_source, line_width=3,  color="navy", alpha=0.5)
+    # p2.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
+    # tab2 = Panel(child=p2, title="Päivä")
 
-tabs = Tabs(tabs=[tab1, tab2])
+    #############
 
-output_file("index.html")
-save(tabs)
+    # TODO: Visualize daily total ticks for each person
+    # p3 = figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT, title="TODO")
+    # p3.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
+    # tab3 = Panel(child=p3, title="Henkilö")
+
+    #############
+
+    tabs = Tabs(tabs=[tab1, tab2])
+
+    output_file("contest_{id}.html".format(id=contest['id']))
+    save(tabs)
+
+    index_html += '<a href="contest_{id}.html">{name}</a><br />\n'.format(id=contest['id'], name=contest['name'])
+
+with open('index.html', 'w') as fp:
+    fp.write(index_html)
+
